@@ -1,0 +1,101 @@
+int redLED = 9;
+int yellowLED = 10;
+int greenLED = 11;
+int buttonPin = 2;
+
+
+const int trigPin = 7;
+const int echoPin = 6;
+
+#define THRESHOLD_DISTANCE 20  
+#define NO_VEHICLE_TIMEOUT 30000  
+
+void setup() {
+  pinMode(redLED, OUTPUT);
+  pinMode(yellowLED, OUTPUT);
+  pinMode(greenLED, OUTPUT);
+  pinMode(buttonPin, INPUT);  
+
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  
+  digitalWrite(redLED, HIGH);
+  digitalWrite(yellowLED, LOW);
+  digitalWrite(greenLED, LOW);
+}
+
+void loop() {
+  static unsigned long noVehicleStart = millis();
+  static bool vehiclePresent = false;
+
+  // Checking for the presence of a vehicle
+  long distance = getDistance();
+  if (distance < THRESHOLD_DISTANCE) {
+    vehiclePresent = true;
+    noVehicleStart = millis();  
+  } else {
+    if (millis() - noVehicleStart > NO_VEHICLE_TIMEOUT) {
+      vehiclePresent = false;
+    }
+  }
+
+  
+  if (digitalRead(buttonPin) == HIGH) {
+    
+    digitalWrite(greenLED, LOW);
+    digitalWrite(yellowLED, LOW);
+    digitalWrite(redLED, HIGH);
+    delay(5000);
+    noVehicleStart = millis();  
+    return; 
+  }
+
+  // Normal Traffic Light Cycle
+  if (vehiclePresent) {
+    digitalWrite(redLED, LOW);
+    digitalWrite(greenLED, HIGH);
+    if (delayWithCheck(5000)) return;  
+
+    digitalWrite(greenLED, LOW);
+    digitalWrite(yellowLED, HIGH);
+    if (delayWithCheck(2000)) return;  
+
+    digitalWrite(yellowLED, LOW);
+    digitalWrite(redLED, HIGH);
+    if (delayWithCheck(5000)) return; 
+  } else {
+    
+    digitalWrite(greenLED, LOW);
+    digitalWrite(yellowLED, LOW);
+    digitalWrite(redLED, HIGH);
+  }
+}
+
+
+long getDistance() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  long duration = pulseIn(echoPin, HIGH);
+  long distance = duration * 0.034 / 2;  
+  return distance;
+}
+
+// checking if button has been pressed
+bool delayWithCheck(int duration) {
+  for (int i = 0; i < duration / 100; i++) {
+    if (digitalRead(buttonPin) == HIGH) {
+      digitalWrite(greenLED, LOW);
+      digitalWrite(yellowLED, LOW);
+      digitalWrite(redLED, HIGH);
+      delay(5000);  
+      return true;  
+    }
+    delay(100);
+  }
+  return false;
+}
